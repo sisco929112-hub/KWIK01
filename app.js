@@ -31,7 +31,10 @@ const store = {
 };
 
 // ===== Checkout / Liberação URL =====
-const CHECKOUT_URL = 'https://pay.bicaju.com/4dcfa2d_429035';
+const CHECKOUT_URL = 'https://mentora.ao/produto/bcd8f77a-d262-4802-94b9-fdcf7c1b2333';
+
+// ===== Delay do Botão VSL: 4 minutos e 38 segundos (278 segundos) =====
+const VSL_BUTTON_DELAY_MS = 278 * 1000;
 
 // ===== Coupon Data (100% Hosted on Cloud CDN - No upload needed!) =====
 const COUPONS = [
@@ -654,7 +657,7 @@ function bindMulticaixa() {
   document.getElementById('btn-continuar-vsl')?.addEventListener('click', () => navigate('/vsl'));
 }
 
-// ===== VSL Page (FORMATO YOUTUBE OFICIAL KWIK) =====
+// ===== VSL Page (FORMATO YOUTUBE OFICIAL KWIK COM DELAY DE 4M 38S) =====
 
 const INITIAL_COMMENTS = [
   { id: 1, name: "Luísa Capitango", avatar: "https://oferta-kwik.vercel.app/assets/commenters/f1.jpg", text: "Boa noite gente! Cheguei agora 🙌", time: "há 14 min" },
@@ -786,10 +789,10 @@ function renderVsl() {
             </div>
           </div>
 
-          <!-- BOTÃO LIBERAR AGORA COM LINK CONFIGURADO -->
-          <div id="vsl-cta">
+          <!-- BOTÃO COM DELAY (SURGE APÓS 4 MINUTOS E 38 SEGUNDOS) -->
+          <div id="vsl-cta" style="display: none;">
             <a href="${CHECKOUT_URL}" target="_blank" rel="noopener noreferrer" class="vsl-cta-btn">
-              ▶ LIBERAR AGORA
+              ▶ LIBERAR O MEU SAQUE
             </a>
           </div>
 
@@ -880,6 +883,33 @@ function bindVsl() {
   script.async = true;
   document.head.appendChild(script);
 
+  // Controle de delay do botão (4 minutos e 38 segundos = 278s)
+  const ctaContainer = document.getElementById('vsl-cta');
+  const urlParams = new URLSearchParams(window.location.search);
+  const bypassDelay = urlParams.get('showCta') === '1';
+
+  if (ctaContainer) {
+    if (bypassDelay) {
+      ctaContainer.style.display = 'flex';
+    } else {
+      ctaContainer.style.display = 'none';
+      const ctaTimer = setTimeout(() => {
+        if (ctaContainer) {
+          ctaContainer.style.display = 'flex';
+          ctaContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, VSL_BUTTON_DELAY_MS);
+      vslIntervals.push(ctaTimer);
+    }
+  }
+
+  // Função global de teste para exibir o botão sem esperar (basta chamar showCta() no console)
+  window.showCta = () => {
+    const el = document.getElementById('vsl-cta');
+    if (el) el.style.display = 'flex';
+  };
+
+  // Flutuação orgânica de espectadores
   const specInterval = setInterval(() => {
     vslSpectators = Math.max(2500, vslSpectators + Math.floor(Math.random() * 11) - 5);
     const countEl = document.getElementById('vsl-spectator-count');
@@ -889,8 +919,9 @@ function bindVsl() {
   }, 3000);
   vslIntervals.push(specInterval);
 
+  // Comentários que chegam dinamicamente
   INCOMING_COMMENTS.forEach(incoming => {
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       vslCommentsList.push({
         id: Date.now() + Math.random(),
         name: incoming.name,
@@ -907,6 +938,7 @@ function bindVsl() {
         container.scrollTop = container.scrollHeight;
       }
     }, incoming.delay);
+    vslIntervals.push(timer);
   });
 
   const likeBtn = document.getElementById('btn-like');
@@ -1010,7 +1042,7 @@ function renderBak1() {
       </div>
 
       <a href="${CHECKOUT_URL}" class="bak-cta-btn">
-        LIBERAR AGORA COM 85% DE DESCONTO 🎁
+        LIBERAR COM 85% DE DESCONTO 🎁
       </a>
     </div>
   `;
@@ -1044,7 +1076,7 @@ function renderDesconto() {
       </div>
 
       <a href="${CHECKOUT_URL}" class="desconto-btn">
-        LIBERAR AGORA
+        LIBERAR O MEU SAQUE
         ${Icons.arrowRight}
       </a>
 
